@@ -40,7 +40,7 @@ func MakeGetUserEndpoint(s Service) endpoint.Endpoint {
 func MakeGetUserBookEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(getRequest)
-		books, offset, limit, cout := s.GetUserBooks(ctx, req.ID, req.Offset, req.Limit, req.Orderby, req.Sort)
+		books, offset, limit, count := s.GetUserBooks(ctx, req.ID, req.Offset, req.Limit, req.Orderby, req.Sort)
 		return successResponseList(books, offset, limit, count), nil
 	}
 }

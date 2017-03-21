@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/go-kit/kit/log"
 	"net/http"
 	"os"
