@@ -33,5 +33,16 @@ func main() {
 	}
 
 	logger.Log("transport", "HTTP", "addr", *httpAddr)
-	http.ListenAndServe(*httpAddr, h)
+	http.ListenAndServe(*httpAddr, securityMiddleware(s, h))
+}
+
+func securityMiddleware(s Service, handle http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		apiKey := r.Header.Get("x-key")
+		jwtToken := r.Header.Get("x-jwt")
+		urlPath := r.URL.Path
+
+		s.AuthProvider(apiKey, jwtToken, urlPath)
+		handle.ServeHTTP(w, r)
+	})
 }

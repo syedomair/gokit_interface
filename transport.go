@@ -27,11 +27,6 @@ func MakeHTTPHandler(s Service, logger log.Logger) http.Handler {
 		decodeGetListRequest,
 		encodeResponse,
 	))
-	r.Methods("GET").Path("/user/{id}").Handler(httptransport.NewServer(
-		e.GetUserEndpoint,
-		decodeGetRequest,
-		encodeResponse,
-	))
 	r.Methods("PUT").Path("/user/{id}").Handler(httptransport.NewServer(
 		e.PutUserEndpoint,
 		decodePutUserRequest,
@@ -40,6 +35,11 @@ func MakeHTTPHandler(s Service, logger log.Logger) http.Handler {
 	r.Methods("POST").Path("/user").Handler(httptransport.NewServer(
 		e.PostUserEndpoint,
 		decodePostUserRequest,
+		encodeResponse,
+	))
+	r.Methods("GET").Path("/user/{id}").Handler(httptransport.NewServer(
+		e.GetUserEndpoint,
+		decodeGetRequest,
 		encodeResponse,
 	))
 	return r
@@ -60,6 +60,22 @@ func decodeGetRequest(_ context.Context, r *http.Request) (request interface{}, 
 		return nil, nil
 	}
 	return getRequest{ID: id}, nil
+}
+
+func decodePutUserRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		return nil, nil
+	}
+	var user models.User
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		return nil, err
+	}
+	return putUserRequest{
+		ID:   id,
+		User: user,
+	}, nil
 }
 
 func decodeGetListRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
@@ -87,22 +103,6 @@ func decodeGetListRequest(_ context.Context, r *http.Request) (request interface
 	}
 
 	return getRequest{ID: id, Offset: offset, Limit: limit, Orderby: orderby, Sort: sort}, nil
-}
-
-func decodePutUserRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
-	if !ok {
-		return nil, nil
-	}
-	var user models.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		return nil, err
-	}
-	return putUserRequest{
-		ID:   id,
-		User: user,
-	}, nil
 }
 
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {

@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	b64 "encoding/base64"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 	"github.com/syedomair/gokit_interface/models"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Service interface {
@@ -15,16 +18,7 @@ type Service interface {
 	GetUser(ctx context.Context, id string) (models.User, error)
 	PutUser(ctx context.Context, id string, u models.User) error
 	GetUserBooks(ctx context.Context, id string, offset string, limit string, orderby string, sort string) (interface{}, string, string, string)
-}
-
-type BookResponse struct {
-	Id          int64  `json:"id"`
-	UserId      int64  `json:"user_id"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
-	Name        string `json:"book_name" `
-	Description string `json:"description" `
-	Publish     bool   `json:"publish" `
+	AuthProvider(xkey string, xjwt string, url_path string) map[string]interface{}
 }
 
 type dbService struct {
@@ -83,6 +77,7 @@ func DBService() Service {
 	}
 }
 
+/* USER  */
 func (d *dbService) PostUser(ctx context.Context, u models.User) error {
 	d.db.NewRecord(u)
 	d.db.FirstOrCreate(&u, u)
@@ -97,6 +92,24 @@ func (d *dbService) GetUser(ctx context.Context, id string) (models.User, error)
 		Scan(&u)
 
 	return u, nil
+}
+
+func (d *dbService) PutUser(ctx context.Context, id string, u models.User) error {
+	d.db.First(&u, id)
+	d.db.Model(&u).Updates(&u)
+
+	return nil
+}
+
+/* BOOK */
+type BookResponse struct {
+	Id          int64  `json:"id"`
+	UserId      int64  `json:"user_id"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	Name        string `json:"book_name" `
+	Description string `json:"description" `
+	Publish     bool   `json:"publish" `
 }
 
 func (d *dbService) GetUserBooks(ctx context.Context, id string, offset string, limit string, orderby string, sort string) (interface{}, string, string, string) {
@@ -117,9 +130,62 @@ func (d *dbService) GetUserBooks(ctx context.Context, id string, offset string, 
 	return bookResponse, offset, limit, strconv.Itoa(count)
 }
 
-func (d *dbService) PutUser(ctx context.Context, id string, u models.User) error {
-	d.db.First(&u, id)
-	d.db.Model(&u).Updates(&u)
+func (d *dbService) AuthProvider(xkey string, xjwt string, url_path string) map[string]interface{} {
+
+	apiKey := xkey
+	jwtToken := xjwt
+
+	publicEndPoint := false
+	if strings.Contains(url_path, "/public/") {
+		publicEndPoint = true
+	}
+
+	if apiKey == "" {
+		return errorAuthResponse("Header missing: x-key ")
+	}
+	if jwtToken == "" {
+		return errorAuthResponse("Header missing: x-jwt ")
+	}
+
+	client := models.Client{}
+	d.db.Table("public.client as c").
+		Select("*").
+		Where("c.api_key = ?", apiKey).
+		Scan(&client)
+
+	if client.ApiSecret == "" {
+		return errorAuthResponse("Invalid api_key ")
+	}
+
+	type Claims struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+		jwt.StandardClaims
+	}
+
+	tokenClaims := Claims{}
+
+	_, err := jwt.ParseWithClaims(jwtToken, &tokenClaims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(client.ApiSecret), nil
+	})
+
+	if err != nil {
+		return errorAuthResponse("Invalid JWT Signature")
+	}
+
+	if !publicEndPoint {
+		if (tokenClaims.Username != "new_registration") && (tokenClaims.Password != "new_registration") {
+			user := models.User{}
+			password, _ := b64.URLEncoding.DecodeString(tokenClaims.Password)
+			plainPassword := string(password)
+
+			d.db.Where("email = ? AND password = ?", tokenClaims.Username, string(plainPassword)).Find(&user)
+
+			if user.FirstName == "" {
+				return errorAuthResponse("Invalid Email or Password ")
+			}
+		}
+	}
 
 	return nil
 }
