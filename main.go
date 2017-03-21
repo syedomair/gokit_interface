@@ -34,16 +34,5 @@ func main() {
 	}
 
 	logger.Log("transport", "HTTP", "addr", *httpAddr)
-	//http.ListenAndServe(*httpAddr, appHandler(handler))
 	http.ListenAndServe(*httpAddr, h)
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-}
-
-type appHandler func(http.ResponseWriter, *http.Request)
-
-func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fn(w, r)
 }

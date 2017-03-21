@@ -17,16 +17,6 @@ type Service interface {
 	GetUserBooks(ctx context.Context, id string, offset string, limit string, orderby string, sort string) (interface{}, string, string, string)
 }
 
-/*
-type User struct {
-	ID        string `json:"id"`
-	FirstName string `json:"first_name,omitempty"`
-	LastName  string `json:"last_name,omitempty"`
-	Email     string `json:"email,omitempty"`
-	Password  string `json:"password,omitempty"`
-}
-*/
-
 type BookResponse struct {
 	Id          int64  `json:"id"`
 	UserId      int64  `json:"user_id"`
@@ -44,27 +34,15 @@ type dbService struct {
 func DBService() Service {
 
 	var Db *gorm.DB
-	/*
-		db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-		if err != nil {
-			logger.Log("err", "The data source arguments are not valid")
-			return nil, err
-		}
-
-		err = db.Ping()
-		if err != nil {
-			logger.Log("err", "Database connection error")
-			return nil, err
-		}
-		return db, err
-	*/
 	var err error
+
 	Db, err = gorm.Open("postgres", os.Getenv("DATABASE_URL"))
 
 	if err != nil {
 		fmt.Println("The data source arguments are not valid")
 		panic(err)
 	}
+
 	Db.SingularTable(true)
 
 	Db.DB().SetMaxIdleConns(3)

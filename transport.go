@@ -57,7 +57,6 @@ func decodeGetRequest(_ context.Context, r *http.Request) (request interface{}, 
 	vars := mux.Vars(r)
 	id, ok := vars["id"]
 	if !ok {
-		//return nil, ErrBadRouting
 		return nil, nil
 	}
 	return getRequest{ID: id}, nil
@@ -67,7 +66,6 @@ func decodeGetListRequest(_ context.Context, r *http.Request) (request interface
 	vars := mux.Vars(r)
 	id, ok := vars["id"]
 	if !ok {
-		//return nil, ErrBadRouting
 		return nil, nil
 	}
 	limit := r.URL.Query().Get("limit")
@@ -95,7 +93,6 @@ func decodePutUserRequest(_ context.Context, r *http.Request) (request interface
 	vars := mux.Vars(r)
 	id, ok := vars["id"]
 	if !ok {
-		//return nil, ErrBadRouting
 		return nil, nil
 	}
 	var user models.User
