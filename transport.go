@@ -10,7 +10,7 @@ import (
 	"github.com/go-kit/kit/log"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
-	"github.com/syedomair/kit2/models"
+	"github.com/syedomair/gokit_interface/models"
 )
 
 func MakeHTTPHandler(s Service, logger log.Logger) http.Handler {

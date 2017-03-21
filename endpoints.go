@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/syedomair/kit2/models"
+	"github.com/syedomair/gokit_interface/models"
 )
 
 type Endpoints struct {

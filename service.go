@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
-	"github.com/syedomair/kit2/models"
+	"github.com/syedomair/gokit_interface/models"
 	"os"
 	"strconv"
 )
