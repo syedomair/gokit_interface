@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/go-kit/kit/log"
 	"net/http"
 	"os"
@@ -42,7 +44,14 @@ func securityMiddleware(s Service, handle http.Handler) http.Handler {
 		jwtToken := r.Header.Get("x-jwt")
 		urlPath := r.URL.Path
 
-		s.AuthProvider(apiKey, jwtToken, urlPath)
-		handle.ServeHTTP(w, r)
+		rtn := s.AuthProvider(apiKey, jwtToken, urlPath)
+		fmt.Println(rtn)
+		if rtn == nil {
+			handle.ServeHTTP(w, r)
+
+		} else {
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			json.NewEncoder(w).Encode(rtn)
+		}
 	})
 }

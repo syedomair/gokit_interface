@@ -7,18 +7,30 @@ import (
 )
 
 type Endpoints struct {
-	PostUserEndpoint    endpoint.Endpoint
-	GetUserEndpoint     endpoint.Endpoint
-	PutUserEndpoint     endpoint.Endpoint
-	GetUserBookEndpoint endpoint.Endpoint
+	PostUserEndpoint         endpoint.Endpoint
+	PostAuthenticateEndpoint endpoint.Endpoint
+	GetUserEndpoint          endpoint.Endpoint
+	PutUserEndpoint          endpoint.Endpoint
+	PatchBookEndpoint        endpoint.Endpoint
+	GetUserBookEndpoint      endpoint.Endpoint
+	PostBookEndpoint         endpoint.Endpoint
+	GetBooksEndpoint         endpoint.Endpoint
+	GetPublicBooksEndpoint   endpoint.Endpoint
+	GetBookEndpoint          endpoint.Endpoint
 }
 
 func MakeServerEndpoints(s Service) Endpoints {
 	return Endpoints{
-		PostUserEndpoint:    MakePostUserEndpoint(s),
-		GetUserEndpoint:     MakeGetUserEndpoint(s),
-		PutUserEndpoint:     MakePutUserEndpoint(s),
-		GetUserBookEndpoint: MakeGetUserBookEndpoint(s),
+		PostUserEndpoint:         MakePostUserEndpoint(s),
+		PostAuthenticateEndpoint: MakePostAuthenticateEndpoint(s),
+		GetUserEndpoint:          MakeGetUserEndpoint(s),
+		PutUserEndpoint:          MakePutUserEndpoint(s),
+		PatchBookEndpoint:        MakePatchBookEndpoint(s),
+		GetUserBookEndpoint:      MakeGetUserBookEndpoint(s),
+		PostBookEndpoint:         MakePostBookEndpoint(s),
+		GetBooksEndpoint:         MakeGetBooksEndpoint(s),
+		GetPublicBooksEndpoint:   MakeGetPublicBooksEndpoint(s),
+		GetBookEndpoint:          MakeGetBookEndpoint(s),
 	}
 }
 
@@ -27,6 +39,13 @@ func MakePostUserEndpoint(s Service) endpoint.Endpoint {
 		req := request.(postUserRequest)
 		e := s.PostUser(ctx, req.User)
 		return successResponse(e), e
+	}
+}
+func MakePostAuthenticateEndpoint(s Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(postUserRequest)
+		u, e := s.PostAuthenticate(ctx, req.User)
+		return successResponse(u), e
 	}
 }
 func MakeGetUserEndpoint(s Service) endpoint.Endpoint {
@@ -45,6 +64,14 @@ func MakePutUserEndpoint(s Service) endpoint.Endpoint {
 	}
 }
 
+func MakePatchBookEndpoint(s Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(patchBookRequest)
+		e := s.PatchBook(ctx, req.ID, req.Book)
+		return successResponse(e), e
+	}
+}
+
 func MakeGetUserBookEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(getRequest)
@@ -53,12 +80,49 @@ func MakeGetUserBookEndpoint(s Service) endpoint.Endpoint {
 	}
 }
 
+func MakePostBookEndpoint(s Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(postBookRequest)
+		e := s.PostBook(ctx, req.Book)
+		return successResponse(e), e
+	}
+}
+func MakeGetBooksEndpoint(s Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(getRequest)
+		books, offset, limit, count := s.GetBooks(ctx, req.Offset, req.Limit, req.Orderby, req.Sort)
+		return successResponseList(books, offset, limit, count), nil
+	}
+}
+
+func MakeGetPublicBooksEndpoint(s Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(getRequest)
+		books, offset, limit, count := s.GetPublicBooks(ctx, req.Offset, req.Limit, req.Orderby, req.Sort)
+		return successResponseList(books, offset, limit, count), nil
+	}
+}
+func MakeGetBookEndpoint(s Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		req := request.(getRequest)
+		b, e := s.GetBook(ctx, req.ID)
+		return successResponse(b), e
+	}
+}
+
 type postUserRequest struct {
 	User models.User
+}
+type postBookRequest struct {
+	Book models.Book
 }
 type putUserRequest struct {
 	ID   string
 	User models.User
+}
+type patchBookRequest struct {
+	ID   string
+	Book models.Book
 }
 
 type getRequest struct {
