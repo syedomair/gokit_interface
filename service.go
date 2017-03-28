@@ -20,7 +20,7 @@ type Service interface {
 	PatchBook(ctx context.Context, id string, u models.Book) error
 	GetUserBooks(ctx context.Context, id string, offset string, limit string, orderby string, sort string) (interface{}, string, string, string)
 	AuthProvider(xkey string, xjwt string, url_path string) map[string]interface{}
-	PostBook(ctx context.Context, b models.Book) error
+	PostBook(ctx context.Context, b models.Book) (string, error)
 	GetBook(ctx context.Context, id string) (BookResponse, error)
 	GetBooks(ctx context.Context, offset string, limit string, orderby string, sort string) (interface{}, string, string, string)
 	GetPublicBooks(ctx context.Context, offset string, limit string, orderby string, sort string) (interface{}, string, string, string)
@@ -46,7 +46,7 @@ func DBService() Service {
 
 	Db.DB().SetMaxIdleConns(3)
 	Db.DB().SetMaxOpenConns(10)
-	Db.LogMode(true)
+	//Db.LogMode(true)
 
 	//The following lines are needed when Heroku drops all the tables periodically.
 	if !Db.HasTable(&models.Client{}) {
@@ -63,7 +63,7 @@ func DBService() Service {
 		user := models.User{FirstName: "John",
 			LastName: "Smith",
 			Email:    "john@gmail.com",
-			Password: "MQ=="}
+			Password: "MTIzNDU="}
 		Db.NewRecord(user)
 		Db.FirstOrCreate(&user, models.User{Email: user.Email})
 	}
@@ -135,10 +135,16 @@ type BookResponse struct {
 	Publish     bool   `json:"publish" `
 }
 
-func (d *dbService) PostBook(ctx context.Context, b models.Book) error {
+func (d *dbService) PostBook(ctx context.Context, b models.Book) (string, error) {
+	if b.Name == "" {
+		return "name is a requird field", nil
+	}
+	if b.UserId == 0 {
+		return "user_id is a requird field", nil
+	}
 	d.db.NewRecord(b)
 	d.db.FirstOrCreate(&b, b)
-	return nil
+	return "", nil
 }
 
 func (d *dbService) PatchBook(ctx context.Context, id string, b models.Book) error {

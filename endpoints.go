@@ -83,8 +83,12 @@ func MakeGetUserBookEndpoint(s Service) endpoint.Endpoint {
 func MakePostBookEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(postBookRequest)
-		e := s.PostBook(ctx, req.Book)
-		return successResponse(e), e
+		str, e := s.PostBook(ctx, req.Book)
+		if str != "" {
+			return errorResponse(str), nil
+		} else {
+			return successResponse(e), e
+		}
 	}
 }
 func MakeGetBooksEndpoint(s Service) endpoint.Endpoint {

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"github.com/go-kit/kit/log"
 	"net/http"
 	"os"
@@ -34,8 +33,13 @@ func main() {
 		h = MakeHTTPHandler(s, log.With(logger, "component", "HTTP"))
 	}
 
+	var sh http.Handler
+	{
+		sh = securityMiddleware(s, h)
+	}
+
 	logger.Log("transport", "HTTP", "addr", *httpAddr)
-	http.ListenAndServe(*httpAddr, securityMiddleware(s, h))
+	http.ListenAndServe(*httpAddr, sh)
 }
 
 func securityMiddleware(s Service, handle http.Handler) http.Handler {
@@ -45,7 +49,6 @@ func securityMiddleware(s Service, handle http.Handler) http.Handler {
 		urlPath := r.URL.Path
 
 		rtn := s.AuthProvider(apiKey, jwtToken, urlPath)
-		fmt.Println(rtn)
 		if rtn == nil {
 			handle.ServeHTTP(w, r)
 
