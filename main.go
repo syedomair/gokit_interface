@@ -12,7 +12,7 @@ func main() {
 	port := os.Getenv("PORT")
 
 	var (
-		httpAddr = flag.String("http.addr", ":"+port, "HTTP listen address for Crowdbotics")
+		httpAddr = flag.String("http.addr", ":"+port, "HTTP listen address for CloudPit")
 	)
 	flag.Parse()
 
